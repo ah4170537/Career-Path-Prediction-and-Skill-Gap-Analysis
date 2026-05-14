@@ -1,0 +1,222 @@
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native'
+import React, { useState } from 'react'
+import { Ionicons } from '@expo/vector-icons'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { useRouter, useLocalSearchParams } from 'expo-router'
+
+const allSkills = ['Python', 'JavaScript', 'SQL', 'Java', 'C++', 'React Native', 'TypeScript']
+const levels = ['Beginner', 'Intermediate', 'Advanced']
+
+const SkillsStep = () => {
+    const router = useRouter();
+    const { userName } = useLocalSearchParams();
+
+    const [search, setSearch] = useState('');
+    const [openSkill, setOpenSkill] = useState(null);
+
+    const [selected, setSelected] = useState({});
+
+    const filtered = allSkills.filter(sk => sk.toLowerCase().includes(search.toLowerCase()))
+
+    const handleAction = () => {
+    
+        if (Object.keys(selected).length === 0) {
+            Alert.alert("Skills Required", "Please select at least one skill to continue.");
+            return;
+        }
+
+        // --- ADDED THIS CONSOLE LOG ---
+        console.log("User Selected Skills:", JSON.stringify(selected, null, 2));
+        
+        // If you want to see them individually in the console:
+        Object.entries(selected).forEach(([skill, level]) => {
+            console.log(`Skill: ${skill} | Level: ${level}`);
+        });
+
+        router.push('/InterestsSteps'); 
+    }
+
+
+    return (
+        <SafeAreaView style={styles.container}>
+            {/* HEADER (No back button here now) */}
+            <View style={styles.header}>
+                <View style={styles.profileRow}>
+                    <View style={styles.avatarCircle}>
+                        <Ionicons name="person" size={22} color="white" />
+                    </View>
+                </View>
+            </View>
+
+            {/* PROGRESS BAR */}
+            
+                <View style={styles.progressContainer}>
+                    <View style={styles.progressTextRow}>
+                        <Text style={styles.stepIndicator}>Step 2 of 3</Text>
+                        <Text style={styles.percentText}>66% Completed</Text>
+                    </View>
+                    <View style={styles.track}>
+                        <View style={[styles.fill, { width: '66%' }]} />
+                    </View>
+                </View>
+        
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+                <View style={styles.skillPage}>
+                    <Text style={styles.skillHeading}>
+            Select Your Current Skills
+                    </Text>
+                    <Text style={styles.skillSub}>Choose the technical and soft skills you've acquired during your journey.</Text>
+
+                    {/* SEARCH BOX */}
+                    <View style={styles.skillSearchBox}>
+                        <Ionicons name="search" size={18} color="#43474E" style={{ marginRight: 8 }} />
+                        <TextInput
+                            style={styles.skillSearchInput}
+                            placeholder="Search skills..."
+                            placeholderTextColor="#43474E"
+                            value={search}
+                            onChangeText={setSearch}
+                        />
+                        {search.length > 0 &&
+                            <TouchableOpacity onPress={() => setSearch('')}>
+                                <Ionicons name="close-circle" size={18} color="#8AA4CF" />
+                            </TouchableOpacity>
+                        }
+                    </View>
+
+                    {/* SKILLS LIST */}
+                    {filtered.map((skill, i) => (
+                        <View key={i} style={{ marginBottom: 10 }}>
+                            <TouchableOpacity
+                                style={[styles.skillRow, openSkill === skill && styles.skillRowActive]}
+                                onPress={() => setOpenSkill(prev => prev === skill ? null : skill)}
+                            >
+                                <Text style={[styles.skillRowText, openSkill === skill && styles.skillRowTextActive]}>{skill}</Text>
+                                {selected[skill] && (
+                                    <View style={styles.skillLevelBadge}>
+                                        <Text style={styles.skillLevelBadgeText}>{selected[skill]}</Text>
+                                    </View>
+                                )}
+                                <Ionicons
+                                    name={openSkill === skill ? 'chevron-up' : 'chevron-down'}
+                                    size={18}
+                                    color={openSkill === skill ? '#0061A5' : '#022448'}
+                                    style={{ marginLeft: 'auto' }}
+                                />
+                            </TouchableOpacity>
+
+                            {openSkill === skill && (
+                                <View style={styles.skillDropdown}>
+                                    {levels.map(level => (
+                                        <TouchableOpacity
+                                            key={level}
+                                            style={styles.skillLevelOption}
+                                            onPress={() => {
+                                                setSelected({ ...selected, [skill]: level });
+                                                setOpenSkill(null);
+                                            }}
+                                        >
+                                            <View style={[styles.skillRadio, selected[skill] === level && styles.skillRadioActive]}>
+                                                {selected[skill] === level && <View style={styles.skillRadioDot} />}
+                                            </View>
+                                            <Text style={[styles.skillLevelText, selected[skill] === level && styles.skillLevelTextActive]}>{level}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            )}
+                        </View>
+                    ))}
+
+                    {/* SUMMARY TAGS */}
+                    {Object.keys(selected).length > 0 && (
+                        <View style={styles.skillSummary}>
+                            <Text style={styles.skillSummaryTitle}>Selected Skills</Text>
+                            <View style={styles.skillTagsWrap}>
+                                {Object.entries(selected).map(([skill, level]) => (
+                                    <View key={skill} style={styles.skillTag}>
+                                        <Text style={styles.skillTagText}>{skill} · {level}</Text>
+                                        <TouchableOpacity onPress={() => {
+                                            const updated = { ...selected };
+                                            delete updated[skill];
+                                            setSelected(updated);
+                                        }}>
+                                            <Ionicons name="close" size={13} color="#0061A5" style={{ marginLeft: 4 }} />
+                                        </TouchableOpacity>
+                                    </View>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+                </View>
+            </ScrollView>
+
+            {/* FOOTER NAVIGATION (Back + Continue/Update) */}
+            <View style={styles.footer}>
+                <View style={styles.footerActionRow}>
+                    <TouchableOpacity 
+                        style={styles.backButton} 
+                        onPress={() => router.push('personalinfo')}
+                    >
+                        <Text style={styles.backButtonText}>Back</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.mainButton} 
+                        onPress={handleAction}
+                    >
+                        <Text style={styles.buttonText}>
+                            Continue
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        </SafeAreaView>
+    )
+};
+export default SkillsStep
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#fff',},
+    header: { paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', alignItems: 'center' },
+    profileRow: { flexDirection: 'row', alignItems: 'center' },
+    avatarCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#022448', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+    headerTitle: { fontSize: 16, fontWeight: '700', color: '#022448' },
+    progressContainer: { paddingHorizontal: 20, marginBottom: 10 },
+    progressTextRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+    stepIndicator: { fontSize: 13, fontWeight: '700', color: '#022448' },
+    percentText: { fontSize: 13, color: '#43474E' },
+    track: { height: 6, backgroundColor: '#E0E0E0', borderRadius: 3 },
+    fill: { height: '100%', backgroundColor: '#0061A5', borderRadius: 3 },
+
+    skillPage: { paddingHorizontal: 20, flex: 1 },
+    skillHeading: { fontSize: 26, fontWeight: '700', color: '#022448', marginBottom: 4, textAlign: 'center' },
+    skillSub: { fontSize: 15, color: '#43474E', marginBottom: 20, textAlign: 'center' },
+    skillSearchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F7', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 },
+    skillSearchInput: { flex: 1, fontSize: 15, color: '#022448' },
+    skillRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E0E6EF', borderRadius: 12, padding: 16, backgroundColor: '#fff' },
+    skillRowActive: { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 },
+    skillRowText: { fontSize: 15, fontWeight: '500', color: '#022448' },
+    skillRowTextActive: { color: '#022448' },
+    skillLevelBadge: { backgroundColor: '#D2E4FF', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 3, marginLeft: 10 },
+    skillLevelBadgeText: { fontSize: 11, fontWeight: '600', color: '#0061A5' },
+    skillDropdown: { borderColor: '#E0E6EF', borderWidth: 1, borderTopWidth: 0, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, paddingHorizontal: 16, paddingVertical: 8 },
+    skillLevelOption: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, gap: 10 },
+    skillRadio: { width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, borderColor: '#022448', justifyContent: 'center', alignItems: 'center' },
+    skillRadioActive: { borderColor: '#0061A5', backgroundColor: '#0061A5' },
+    skillRadioDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' },
+    skillLevelText: { fontSize: 14, color: '#43474E' },
+    skillLevelTextActive: { color: '#022448', fontWeight: '600' },
+    skillSummary: { marginTop: 24, backgroundColor: '#022448', borderRadius: 12, padding: 16 },
+    skillSummaryTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginBottom: 10 },
+    skillTagsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    skillTag: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#D2E4FF', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5 },
+    skillTagText: { fontSize: 12, fontWeight: '500', color: '#0061A5' },
+
+    // FOOTER STYLES
+    footer: {bottom: 0, left: 0, right: 0, backgroundColor: '#fff', padding: 20, borderTopWidth: 1, borderTopColor: '#F1F3F7' },
+    footerActionRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    backButton: { flex: 1, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#022448' },
+    backButtonText: { color: '#022448', fontSize: 18, fontWeight: '700' },
+    mainButton: { flex: 2, backgroundColor: '#022448', height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center' },
+    buttonText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+})
