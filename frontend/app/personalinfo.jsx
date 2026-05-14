@@ -2,29 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter} from 'expo-router';
+import { useDispatch, useSelector } from "react-redux";
+import { setField } from "../store/profileSlice";
 
 export default function ProfileInfo() {
   const router = useRouter();
-  const { userName } = useLocalSearchParams(); 
-
-  const [formData, setFormData] = useState({
-    fullName: '',
-    studyLevel: '',
-    institute: '',
-    program: '',
-    isCompleted: null,
-    completionYear: '',
-    semester: '',
-    cgpa: '',
-  });
-
+  const profile = useSelector((state) => state.profile);
+const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
   const studyLevels = ['Matric', 'Fsc', 'Graduation'];
 
   const updateField = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  dispatch(setField({ field, value }));
+};
   const isFieldDisabled = (previousValue) => {
     return !previousValue || previousValue.toString().trim().length === 0;
   };
@@ -34,10 +25,10 @@ export default function ProfileInfo() {
     // If onboarding, disable if the previous field is empty.
 
   const handlePress = () => {
-  const { fullName, studyLevel, institute, program, isCompleted } = formData;
+  const { fullName, studyLevel, institute, program, isCompleted } = profile;
   
   // Log data to see what is missing in your console
-  console.log("Current Form Data:", formData);
+  console.log("Current Form Data:", profile);
 
   if (!fullName || !studyLevel || !institute || !program || isCompleted === null) {
     Alert.alert("Required", "Please complete all mandatory fields.");
@@ -79,7 +70,7 @@ export default function ProfileInfo() {
           <Text style={styles.label}>Full Name</Text>
           <View style={styles.inputBox}>
             <TextInput 
-              value={formData.fullName} 
+              value={profile.fullName}
               onChangeText={(val) => updateField('fullName', val)} 
               placeholder="Full Name" 
               style={styles.textInput} 
@@ -88,14 +79,14 @@ export default function ProfileInfo() {
         </View>
 
         {/* 2. Study Level (Disabled until Name is filled) */}
-        <View style={[styles.inputCard, isFieldDisabled(formData.fullName) && styles.disabledOpacity]}>
+        <View style={[styles.inputCard, isFieldDisabled(profile.fullName) && styles.disabledOpacity]}>
           <Text style={styles.label}>Level of Study</Text>
           <TouchableOpacity 
-            disabled={isFieldDisabled(formData.fullName)}
+            disabled={isFieldDisabled(profile.fullName)}
             onPress={() => setShowDropdown(!showDropdown)} 
             style={styles.inputBox}
           >
-            <Text style={styles.textInput}>{formData.studyLevel || "Select Level"}</Text>
+            <Text style={styles.textInput}>{profile.studyLevel || "Select Level"}</Text>
             <Ionicons name="chevron-down" size={20} color="#43474E" />
           </TouchableOpacity>
           {showDropdown && (
@@ -110,12 +101,12 @@ export default function ProfileInfo() {
         </View>
 
         {/* 3. Institute (Disabled until Study Level is selected) */}
-        <View style={[styles.inputCard, isFieldDisabled(formData.studyLevel) && styles.disabledOpacity]}>
+        <View style={[styles.inputCard, isFieldDisabled(profile.studyLevel) && styles.disabledOpacity]}>
           <Text style={styles.label}>Institute / University</Text>
           <View style={styles.inputBox}>
             <TextInput 
-              editable={!isFieldDisabled(formData.studyLevel)}
-              value={formData.institute} 
+              editable={!isFieldDisabled(profile.studyLevel)}
+              value={profile.institute} 
               onChangeText={(val) => updateField('institute', val)} 
               placeholder="e.g. GCUF" 
               style={styles.textInput} 
@@ -124,12 +115,12 @@ export default function ProfileInfo() {
         </View>
 
         {/* 4. Program (Disabled until Institute is filled) */}
-        <View style={[styles.inputCard, isFieldDisabled(formData.institute) && styles.disabledOpacity]}>
+        <View style={[styles.inputCard, isFieldDisabled(profile.institute) && styles.disabledOpacity]}>
           <Text style={styles.label}>Program / Field</Text>
           <View style={styles.inputBox}>
             <TextInput 
-              editable={!isFieldDisabled(formData.institute)}
-              value={formData.program} 
+              editable={!isFieldDisabled(profile.institute)}
+              value={profile.program} 
               onChangeText={(val) => updateField('program', val)} 
               placeholder="e.g. BS IT" 
               style={styles.textInput} 
@@ -138,48 +129,48 @@ export default function ProfileInfo() {
         </View>
 
         {/* 5. Status (Disabled until Program is filled) */}
-        <View style={[styles.inputCard, isFieldDisabled(formData.program) && styles.disabledOpacity]}>
+        <View style={[styles.inputCard, isFieldDisabled(profile.program) && styles.disabledOpacity]}>
           <Text style={styles.label}>Status</Text>
           <View style={styles.row}>
             <TouchableOpacity 
-              disabled={isFieldDisabled(formData.program)}
+              disabled={isFieldDisabled(profile.program)}
               onPress={() => updateField('isCompleted', true)} 
-              style={[styles.statusBtn, formData.isCompleted === true && styles.statusActive]}
+              style={[styles.statusBtn, profile.isCompleted === true && styles.statusActive]}
             >
-              <Text style={formData.isCompleted === true && styles.activeBtnText}>Completed</Text>
+              <Text style={profile.isCompleted === true && styles.activeBtnText}>Completed</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              disabled={isFieldDisabled(formData.program)}
+              disabled={isFieldDisabled(profile.program)}
               onPress={() => updateField('isCompleted', false)} 
-              style={[styles.statusBtn, formData.isCompleted === false && styles.statusActive]}
+              style={[styles.statusBtn, profile.isCompleted === false && styles.statusActive]}
             >
-              <Text style={formData.isCompleted === false && styles.activeBtnText}>In Progress</Text>
+              <Text style={profile.isCompleted === false && styles.activeBtnText}>In Progress</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Dynamic Fields (Year, Semester, CGPA) */}
-        {formData.isCompleted === true && (
+        {profile.isCompleted === true && (
           <View style={styles.inputCard}>
             <Text style={styles.label}>Year of Completion</Text>
             <View style={styles.inputBox}>
-              <TextInput value={formData.completionYear} onChangeText={(val) => updateField('completionYear', val)} placeholder="e.g. 2024" keyboardType="numeric" style={styles.textInput} />
+              <TextInput value={profile.completionYear} onChangeText={(val) => updateField('completionYear', val)} placeholder="e.g. 2024" keyboardType="numeric" style={styles.textInput} />
             </View>
           </View>
         )}
 
-        {formData.isCompleted === false && formData.studyLevel === 'Graduation' && (
+        {profile.isCompleted === false && profile.studyLevel === 'Graduation' && (
           <View style={styles.row}>
             <View style={[styles.inputCard, { flex: 1 }]}>
               <Text style={styles.label}>Semester</Text>
               <View style={styles.inputBox}>
-                <TextInput value={formData.semester} onChangeText={(val) => updateField('semester', val)} placeholder="e.g. 6" keyboardType="numeric" style={styles.textInput} />
+                <TextInput value={profile.semester} onChangeText={(val) => updateField('semester', val)} placeholder="e.g. 6" keyboardType="numeric" style={styles.textInput} />
               </View>
             </View>
             <View style={[styles.inputCard, { flex: 1, marginLeft: 10 }]}>
               <Text style={styles.label}>CGPA</Text>
               <View style={styles.inputBox}>
-                <TextInput value={formData.cgpa} onChangeText={(val) => updateField('cgpa', val)} placeholder="e.g. 3.8" keyboardType="numeric" style={styles.textInput} />
+                <TextInput value={profile.cgpa} onChangeText={(val) => updateField('cgpa', val)} placeholder="e.g. 3.8" keyboardType="numeric" style={styles.textInput} />
               </View>
             </View>
           </View>

@@ -2,11 +2,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'rea
 import React, { useState, useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 const Home = () => {
   const router = useRouter();
-  const { userName } = useLocalSearchParams();
+const [userName, setUserName] = useState("");
   const actions = [
     { icon: 'list', label: 'Update Skills' },
     { icon: 'map', label: 'View Roadmap', route: '/(tabs)/skillsgap' },
@@ -15,9 +16,18 @@ const Home = () => {
     { icon: 'code-slash', label: 'Python', percent: 60 },
     { icon: 'server', label: 'SQL', percent: 40 },
   ]
+ useEffect(() => {
+    const getName = async () => {
+      const name = await AsyncStorage.getItem("userName");
+      setUserName(name);
+    };
+
+    getName();
+  }, []);
+
   return (
     <SafeAreaView>
-      <ScrollView showsVerticalScrollIndicator={false} >
+      
         <View style={styles.viewarea}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
             <TouchableOpacity onPress={() => router.push('/profile')}>
@@ -41,15 +51,11 @@ const Home = () => {
             </View>
           </View>
 
-
+        <ScrollView showsVerticalScrollIndicator={false} >
           <View style={{ alignItems: 'center' }}>
             <View style={styles.predictbox}>
               <View style={{ justifyContent: 'center' }}>
-                <Text style={styles.innerText}>70% Complete</Text>
-                <Text style={{ color: '#8AA4CF', fontSize: 14 }}>Finish your profile to unlock matches</Text>
-                <View style={styles.progressBarContainer}>
-                  <View style={styles.progressFill} />
-                </View>
+                <Text style={styles.innerText}>Finish your profile to unlock matches</Text>
                 <TouchableOpacity style={styles.predictbutton} onPress={() => router.push('/personalinfo')}>
                   <Text style={{ fontSize: 18, color: '#001C37', fontWeight: 500 }}>Finish Profile</Text>
                 </TouchableOpacity>
@@ -110,8 +116,9 @@ const Home = () => {
             </View>
 
           </View>
+          </ScrollView>
         </View>
-      </ScrollView>
+      
     </SafeAreaView>
   )
 }
@@ -154,8 +161,10 @@ placeholderImg: {
     width: 100 + '%',
   },
   innerText: {
-    fontSize: 22,
+    fontSize: 20,
     color: '#fff',
+    marginBottom:20,
+    textAlign:'center',
   },
   progressBarContainer: {
     width: '100%',
@@ -266,7 +275,8 @@ placeholderImg: {
   skillCard: {
     backgroundColor: '#fff',
     borderRadius: 15,
-    padding: 20, marginVertical: 16, width: '100%'
+    padding: 20, marginVertical: 16, width: '100%',
+    marginBottom:60,
   },
   skillHeader: {
     flexDirection: 'row',

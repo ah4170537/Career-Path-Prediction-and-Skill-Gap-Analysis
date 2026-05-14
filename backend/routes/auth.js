@@ -131,4 +131,64 @@ router.post('/reset-password', async (req, res) => {
 });
 
 
+// User Information API
+
+router.post("/user-information", async (req, res) => {
+  try {
+    const {
+      userId,
+      fullName,
+      studyLevel,
+      institute,
+      field,
+      status,
+      completionYear,
+      semester,
+      cgpa,
+      skills,
+      interests,
+      resume,
+    } = req.body;
+
+    // 🔴 check if profile already exists
+    const existingProfile = await UserInformation.findOne({ userId });
+
+    if (existingProfile) {
+      return res.status(400).json({
+        message: "Profile already exists",
+      });
+    }
+
+    // 🟢 create new profile
+    const userInfo = new UserInformation({
+      userId,
+      fullName,
+      studyLevel,
+      institute,
+      field,
+      status,
+      completionYear,
+      semester,
+      cgpa,
+      skills,
+      interests,
+      resume,
+      profileCompleted: true,
+    });
+
+    await userInfo.save();
+
+    res.json({
+      message: "Profile saved successfully",
+      userInfo,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+});
+
+
 module.exports = router;

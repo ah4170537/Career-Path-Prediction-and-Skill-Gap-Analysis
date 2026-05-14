@@ -30,29 +30,23 @@ const login = () => {
       });
       
       const userData = response.data.user; 
+      const userName = userData.name;
       const id = userData.Userid; // फर्ज करें backend ID bhej raha hai
 console.log("----------------------------");
       console.log("USER LOGGED IN SUCCESSFULLY!");
       console.log("USER ID:", id);
+      console.log("USER Name:", userName);
       console.log("----------------------------");
       // ✅ UserId ko phone ki memory mein save karein
     
 
     
 // ✅ await lagana lazmi hai
-await AsyncStorage.setItem('userId', id);
-      console.log('LOGIN SUCCESS:', response.data);
-
-      const nameValue = response.data.user?.name || 'User'; 
-// const imageValue = response.data.profileImage || null;
+      await AsyncStorage.setItem('userId', id);
+      await AsyncStorage.setItem("userName", userName);
 
       router.push({
-  pathname: '/(tabs)/Home',
-  params: {
-    userName: nameValue, 
-    // userImage: imageValue
-  }
-});
+  pathname: '/(tabs)/Home',});
 
     } catch (error) {
       console.log('LOGIN ERROR:', error.response?.data);
