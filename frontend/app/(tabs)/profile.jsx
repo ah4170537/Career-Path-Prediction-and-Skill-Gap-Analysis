@@ -5,6 +5,8 @@ import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react'
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 const profile = () => {
   const router = useRouter();
@@ -14,7 +16,7 @@ const settingsOptions = [
   { icon: 'code-slash-outline', label: 'Technical Skills', route: 'SkillsStep' }, // Replaced Security
   { icon: 'compass-outline', label: 'Career Interests', route:'InterestsSteps' },   // More relevant for your project
   { icon: 'school-outline', label: 'Change Email' },
-  { icon: 'help-circle-outline', label: 'Change Password' },
+  { icon: 'help-circle-outline', label: 'Change Password', route: '../newpassword' },
   { icon: 'log-out-outline', label: 'Log out', isLast: true },
 ];
 

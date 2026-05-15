@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState, useEffect } from 'react'
 import { useLocalSearchParams } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../api/api'
 
 const newpassword = () => {
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConformPassword, setShowConformPassword] = useState(false);
   const router = useRouter();
@@ -14,7 +16,41 @@ const newpassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const params = useLocalSearchParams();
-  const email = params?.email || '';
+  const [id, setId] = useState(null);
+const [email, setEmail] = useState('');
+
+  useEffect(() => {
+  const loadStatus = async () => {
+    try {
+      const status = await AsyncStorage.getItem("profileCompleted");
+      const userId = await AsyncStorage.getItem("userId");
+      const userEmail = await AsyncStorage.getItem("userEmail");
+       const parsedStatus = status === "true";
+
+      setProfileCompleted(parsedStatus);
+      setId(userId);
+      setEmail(userEmail || '');
+      console.log("STATUS:", parsedStatus);
+      console.log("ID:", userId);
+      console.log("EMAIL:", userEmail);
+
+
+      const email = '';
+
+      if (userId && userEmail) {
+        email = userEmail;
+      } else {
+        email = params?.email || '';
+      }
+
+      setEmail(email);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  loadStatus();
+}, []);
 
 
 
@@ -42,8 +78,13 @@ const newpassword = () => {
         password,
       });
 
+       if (id) {
+      router.push('/profile');   // or '/(tabs)/profile'
       Alert.alert('Success', 'Password updated');
+    } else {
       router.push('/login');
+      Alert.alert('Success', 'Password updated');
+    }
 
     } catch (error) {
       console.log('RESET PASSWORD ERROR:', error.response?.data);
@@ -64,6 +105,7 @@ const newpassword = () => {
   return (
     <SafeAreaView>
       <View style={styles.viewarea}>
+        {(!profileCompleted &&
         <TouchableOpacity style={{
           width: 40,
           height: 40,
@@ -75,6 +117,7 @@ const newpassword = () => {
         }} onPress={() => router.push('/Otppage')}>
           <Ionicons name='arrow-back' color={"#fff"} size={28} />
         </TouchableOpacity>
+        )}
         <Text style={styles.heading}>Create a New Password</Text>
         <Text style={styles.subheading}>Enter your new password</Text>
         <Text style={styles.Label}>New Password</Text>

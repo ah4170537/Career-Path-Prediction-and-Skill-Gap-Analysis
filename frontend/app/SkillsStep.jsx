@@ -75,6 +75,7 @@ const SkillsStep = () => {
               const data = response.data;
     
     console.log("USER DATA:", data);
+    
            
     
     // INTERESTS ARRAY

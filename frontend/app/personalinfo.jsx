@@ -73,6 +73,7 @@ useEffect(() => {
 
 console.log("USER DATA:", data);
 
+
           dispatch(setField({ field: "fullName", value: data.fullName || "" }));
           dispatch(setField({ field: "studyLevel", value: data.studyLevel || "" }));
           dispatch(setField({ field: "institute", value: data.institute || "" }));
