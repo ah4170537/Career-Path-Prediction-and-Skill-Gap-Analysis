@@ -14,7 +14,7 @@ export default function ProfileInfo() {
   const profile = useSelector((state) => state.profile);
 const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
-  const studyLevels = ['Matric', 'Fsc', 'Graduation'];
+  const studyLevels = ['Matric', 'FSc', 'Graduation'];
 
   const updateField = (field, value) => {
   dispatch(setField({ field, value }));
@@ -94,10 +94,20 @@ console.log("USER DATA:", data);
 const handleUpdate = async () => {
   try {
     const userId = await AsyncStorage.getItem("userId");
+    const payload = {
+      fullName: profile.fullName,
+      studyLevel: profile.studyLevel,
+      institute: profile.institute,
+      program: profile.program,
+      Educationstatus: profile.Educationstatus,
+      completionYear: profile.completionYear,
+      semester: profile.semester,
+      cgpa: profile.cgpa,
+    };
 
     const response = await api.put(
       `/api/userinformation/${userId}`,
-      profile   // sending redux state directly
+      payload   // sending redux state directly
     );
 
     console.log("UPDATED:", response.data);

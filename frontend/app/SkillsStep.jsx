@@ -1,16 +1,19 @@
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState , useEffect } from 'react'
 import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRouter } from 'expo-router'
 import { useDispatch, useSelector } from "react-redux";
 import { addSkill } from "../store/profileSlice";
 import { removeSkill } from "../store/profileSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../api/api";
 
 const allSkills = ['Python', 'JavaScript', 'SQL', 'Java', 'C++', 'React Native', 'TypeScript']
 const levels = ['Beginner', 'Intermediate', 'Advanced']
 
 const SkillsStep = () => {
+    const [profileCompleted, setProfileCompleted] = useState(false);
     const dispatch = useDispatch();
     const profile = useSelector((state) => state.profile);
     const router = useRouter();
@@ -43,6 +46,94 @@ const SkillsStep = () => {
         router.push('/InterestsSteps');
     }
 
+    useEffect(() => {
+    
+      const loadProfileData = async () => {
+    
+        try {
+    
+          const status = await AsyncStorage.getItem("profileCompleted");
+    
+          if (status !== null) {
+    
+            const parsedStatus = JSON.parse(status);
+    
+            setProfileCompleted(parsedStatus);
+    
+            // ONLY fetch existing profile
+            if (parsedStatus) {
+    
+              const userId = await AsyncStorage.getItem("userId");
+    
+              console.log("USER ID:", userId);
+    
+              // FETCH PROFILE
+              const response = await api.get(
+                `/api/userinformation/${userId}`
+              );
+    
+              const data = response.data;
+    
+    console.log("USER DATA:", data);
+           
+    
+    // INTERESTS ARRAY
+    
+    // RESUME OBJECT
+    
+              // RESUME
+              if (data.resume) {
+    
+                dispatch(setResume({
+                  fileName: data.resume.fileName || "",
+                  filePath: data.resume.filePath || "",
+                  fileType: data.resume.fileType || "",
+                }));
+    
+                setResumeFile(data.resume);
+              }
+            }
+          }
+    
+        } catch (error) {
+    
+          console.log("PROFILE LOAD ERROR:", error);
+    
+        }
+      };
+    
+      loadProfileData();
+    
+    }, []);
+    
+    
+    const handleUpdate = async () => {
+      try {
+        const userId = await AsyncStorage.getItem("userId");
+        const payload = {
+          skills: profile.skills,
+        };
+    
+        const response = await api.put(
+          `/api/userinformation/${userId}`,
+          payload   // sending redux state directly
+        );
+    
+        console.log("UPDATED:", response.data);
+    
+        Alert.alert("Success", "Profile updated successfully");
+        router.push('/profile')
+    
+      } catch (error) {
+        console.log(error);
+    
+        Alert.alert(
+          "Error",
+          error.response?.data?.message || "Update failed"
+        );
+      }
+    };
+
 
     return (
         <SafeAreaView style={styles.container}>
@@ -56,7 +147,7 @@ const SkillsStep = () => {
             </View>
 
             {/* PROGRESS BAR */}
-
+{!profileCompleted && (
             <View style={styles.progressContainer}>
                 <View style={styles.progressTextRow}>
                     <Text style={styles.stepIndicator}>Step 2 of 3</Text>
@@ -66,13 +157,13 @@ const SkillsStep = () => {
                     <View style={[styles.fill, { width: '66%' }]} />
                 </View>
             </View>
-
+)}
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                 <View style={styles.skillPage}>
                     <Text style={styles.skillHeading}>
-                        Select Your Current Skills
+                        {!profileCompleted ? "Select Your Skills" : "Update Skills"}
                     </Text>
-                    <Text style={styles.skillSub}>Choose the technical and soft skills you've acquired during your journey.</Text>
+                    {!profileCompleted && (<Text style={styles.skillSub}>Choose the technical and soft skills you've acquired during your journey.</Text>)}
 
                     {/* SEARCH BOX */}
                     <View style={styles.skillSearchBox}>
@@ -170,21 +261,22 @@ const SkillsStep = () => {
             {/* FOOTER NAVIGATION (Back + Continue/Update) */}
             <View style={styles.footer}>
                 <View style={styles.footerActionRow}>
-                    <TouchableOpacity
-                        style={styles.backButton}
-                        onPress={() => router.push('personalinfo')}
-                    >
-                        <Text style={styles.backButtonText}>Back</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.mainButton}
-                        onPress={handleAction}
-                    >
-                        <Text style={styles.buttonText}>
-                            Continue
-                        </Text>
-                    </TouchableOpacity>
+                    {!profileCompleted && (
+                              <TouchableOpacity 
+                                style={styles.backButton} 
+                                onPress={() => router.push('SkillsStep')}
+                              >
+                                <Text style={styles.backButtonText}>Back</Text>
+                              </TouchableOpacity>
+                            )}
+                              <TouchableOpacity
+                                  style={styles.mainButton}
+                                  onPress={profileCompleted ? handleUpdate : handleAction}
+                                >
+                                  <Text style={styles.buttonText}>
+                                    {profileCompleted ? "Update" : "Continue"}
+                                  </Text>
+                                </TouchableOpacity>
                 </View>
             </View>
         </SafeAreaView>
@@ -206,7 +298,7 @@ const styles = StyleSheet.create({
     fill: { height: '100%', backgroundColor: '#0061A5', borderRadius: 3 },
 
     skillPage: { paddingHorizontal: 20, flex: 1 },
-    skillHeading: { fontSize: 26, fontWeight: '700', color: '#022448', marginBottom: 4, textAlign: 'center', marginTop: 10 },
+    skillHeading: { fontSize: 26, fontWeight: '700', color: '#022448', marginBottom: 4, textAlign: 'center', marginTop: 10, marginBottom:15 },
     skillSub: { fontSize: 15, color: '#43474E', marginBottom: 20, textAlign: 'center' },
     skillSearchBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F3F7', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 16 },
     skillSearchInput: { flex: 1, fontSize: 15, color: '#022448' },

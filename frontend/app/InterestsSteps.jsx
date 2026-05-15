@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -10,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/api";
 
 const InterestsStep = () => {
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
 const profile = useSelector((state) => state.profile);
@@ -69,6 +70,8 @@ const profile = useSelector((state) => state.profile);
         };
 
         console.log("FINAL DATA:", finalData);
+        setProfileCompleted(true);
+await AsyncStorage.setItem("profileCompleted", JSON.stringify(true));
 
         // ✅ API call
         const response = await api.post(
@@ -143,6 +146,98 @@ dispatch(setResume({
     }
   }
 
+  useEffect(() => {
+
+  const loadProfileData = async () => {
+
+    try {
+
+      const status = await AsyncStorage.getItem("profileCompleted");
+
+      if (status !== null) {
+
+        const parsedStatus = JSON.parse(status);
+
+        setProfileCompleted(parsedStatus);
+
+        // ONLY fetch existing profile
+        if (parsedStatus) {
+
+          const userId = await AsyncStorage.getItem("userId");
+
+          console.log("USER ID:", userId);
+
+          // FETCH PROFILE
+          const response = await api.get(
+            `/api/userinformation/${userId}`
+          );
+
+          const data = response.data;
+
+console.log("USER DATA:", data);
+
+// }
+
+// INTERESTS ARRAY
+if (data.interests) {
+  dispatch(setInterests(data.interests));
+}
+
+// RESUME OBJECT
+
+          // RESUME
+          if (data.resume) {
+
+            dispatch(setResume({
+              fileName: data.resume.fileName || "",
+              filePath: data.resume.filePath || "",
+              fileType: data.resume.fileType || "",
+            }));
+
+            setResumeFile(data.resume);
+          }
+        }
+      }
+
+    } catch (error) {
+
+      console.log("PROFILE LOAD ERROR:", error);
+
+    }
+  };
+
+  loadProfileData();
+
+}, []);
+
+
+const handleUpdate = async () => {
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+    const payload = {
+      interests: profile.interests,
+    };
+
+    const response = await api.put(
+      `/api/userinformation/${userId}`,
+      payload   // sending redux state directly
+    );
+
+    console.log("UPDATED:", response.data);
+
+    Alert.alert("Success", "Profile updated successfully");
+    router.push('/profile')
+
+  } catch (error) {
+    console.log(error);
+
+    Alert.alert(
+      "Error",
+      error.response?.data?.message || "Update failed"
+    );
+  }
+};
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 1. HEADER SECTION */}
@@ -156,7 +251,7 @@ dispatch(setResume({
       </View>
 
       {/* 2. PROGRESS BAR (Step 3 - 100%) */}
-      
+      {!profileCompleted && (
         <View style={styles.progressContainer}>
           <View style={styles.progressTextRow}>
             <Text style={styles.stepIndicator}>Step 3 of 3</Text>
@@ -166,14 +261,12 @@ dispatch(setResume({
             <View style={[styles.fill, { width: '100%' }]} />
           </View>
         </View>
-  
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         <View style={styles.stepContainer}>
-          <Text style={styles.mainTitle}>
-            Your Interests
-          </Text>
-          <Text style={styles.subTitle}>Select the fields that excite you the most for your future career.</Text>
+          <Text style={styles.mainTitle}>{!profileCompleted ? "Your Interests" : "Update Interests"}</Text>
+          {!profileCompleted && (<Text style={styles.subTitle}>Select the fields that excite you the most for your future career.</Text>)}
 
           {/* Search / Add Bar */}
           <View style={styles.searchSection}>
@@ -241,21 +334,22 @@ dispatch(setResume({
       {/* 3. FOOTER NAVIGATION */}
       <View style={styles.footer}>
         <View style={styles.footerActionRow}>
+        {!profileCompleted && (
           <TouchableOpacity 
             style={styles.backButton} 
             onPress={() => router.push('SkillsStep')}
           >
             <Text style={styles.backButtonText}>Back</Text>
           </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.mainButton} 
-            onPress={handleAction}
-          >
-            <Text style={styles.buttonText}>
-              Finish
-            </Text>
-          </TouchableOpacity>
+        )}
+          <TouchableOpacity
+              style={styles.mainButton}
+              onPress={profileCompleted ? handleUpdate : handleAction}
+            >
+              <Text style={styles.buttonText}>
+                {profileCompleted ? "Update" : "Continue"}
+              </Text>
+            </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -281,7 +375,7 @@ const styles = StyleSheet.create({
   fill: { height: '100%', backgroundColor: '#0061A5', borderRadius: 3 },
 
   stepContainer: { paddingHorizontal: 20 },
-  mainTitle: { fontSize: 26, fontWeight: '700', color: '#022448', textAlign: 'center', marginTop: 10 },
+  mainTitle: { fontSize: 26, fontWeight: '700', color: '#022448', textAlign: 'center', marginTop: 10 ,marginBottom: 15},
   subTitle: { fontSize: 15, color: '#43474E', textAlign: 'center', marginBottom: 25, lineHeight: 22 },
   
   searchSection: { marginBottom: 20 },
