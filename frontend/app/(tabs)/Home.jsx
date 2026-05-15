@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 const Home = () => {
   const router = useRouter();
 const [userName, setUserName] = useState("");
+const [profileCompleted, setProfileCompleted] = useState(false);
   const actions = [
     { icon: 'list', label: 'Update Skills' },
     { icon: 'map', label: 'View Roadmap', route: '/(tabs)/skillsgap' },
@@ -19,17 +20,56 @@ const [userName, setUserName] = useState("");
  useEffect(() => {
     const getName = async () => {
       const name = await AsyncStorage.getItem("userName");
+      const id = await AsyncStorage.getItem("userId");
       setUserName(name);
+      console.log("User id" , id);
     };
 
     getName();
   }, []);
+
+  useEffect(() => {
+   const checkProfileStatus = async () => {
+      try {
+         const status = await AsyncStorage.getItem("profileCompleted");
+
+         if (status !== null) {
+            setProfileCompleted(JSON.parse(status));
+         }
+      } catch (error) {
+         console.log(error);
+      }
+   };
+
+   checkProfileStatus();
+}, []);
+  const handleLogout = async () => {
+  try {
+    // 1. Remove stored auth data
+    await AsyncStorage.removeItem("userId");
+    await AsyncStorage.removeItem("rememberMe");
+    await AsyncStorage.removeItem("profileCompleted");
+
+    // 2. Reset Redux (important)
+    // dispatch(resetProfile());
+
+    // 3. Redirect to login
+    router.replace("/login");
+
+  } catch (error) {
+    console.log("Logout error:", error);
+  }
+};
+  
 
   return (
     <SafeAreaView>
       
         <View style={styles.viewarea}>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+            <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+  <Text style={{ color: "#022448" }}>Logout</Text>
+</TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/profile')}>
               {/* 3. Logic for Empty vs Uploaded Image */}
               {/* {userImage ? (
@@ -53,6 +93,7 @@ const [userName, setUserName] = useState("");
 
         <ScrollView showsVerticalScrollIndicator={false} >
           <View style={{ alignItems: 'center' }}>
+            {!profileCompleted && (
             <View style={styles.predictbox}>
               <View style={{ justifyContent: 'center' }}>
                 <Text style={styles.innerText}>Finish your profile to unlock matches</Text>
@@ -61,6 +102,7 @@ const [userName, setUserName] = useState("");
                 </TouchableOpacity>
               </View>
             </View>
+            )}
             <View style={styles.card}>
               <View style={styles.row}>
 

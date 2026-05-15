@@ -45,7 +45,9 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Email or password is incorrect' });
 
-    
+    const userProfile = await UserInformation.findOne({
+  userId: user._id
+});
     // UPDATE: Include the user data in the response
     return res.status(200).json({ 
       message: 'Login successful',
@@ -54,6 +56,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         profileImage: user.profileImage || null, // Send null if no image exists yet
         Userid:user._id,
+        profileCompleted: userProfile?.profileCompleted || false,
       }
     });
     
@@ -138,7 +141,7 @@ router.post('/reset-password', async (req, res) => {
 router.post("/user-information", async (req, res) => {
   try {
     const {
-  userId,
+      userId,
   email,
   fullName,
   studyLevel,
@@ -186,6 +189,57 @@ router.post("/user-information", async (req, res) => {
     message: err.message,
   });
 }
+});
+
+
+// Get User Information
+router.get("/userinformation/:id", async (req, res) => {
+  try {
+    const user = await UserInformation.findOne({userId: req.params.id,});
+    console.log("PARAM ID:", req.params.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
+
+
+// Update Personal Information 
+router.put("/userinformation/:id", async (req, res) => {
+  try {
+    const updatedUser = await UserInformation.findOneAndUpdate(
+      { userId: req.params.id },   // important (NOT _id)
+      { $set: req.body },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      data: updatedUser,
+    });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: error.message,
+    });
+  }
 });
 
 

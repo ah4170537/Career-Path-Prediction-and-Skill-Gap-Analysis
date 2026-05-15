@@ -17,10 +17,11 @@ const userInformationSchema = new mongoose.Schema(
     // ✅ STILL USE ObjectId (This is the internal ID found via email)
   {
     userId: {
-      type: String,
-      
-      unique: true, 
-    },
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "User",
+  required: true,
+  unique: true,
+},
     email: {
       type: String, 
       

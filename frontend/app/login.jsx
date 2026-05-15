@@ -1,5 +1,5 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState , useEffect } from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -12,6 +12,7 @@ const login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async () => {
     let newErrors = {};
@@ -33,11 +34,13 @@ const login = () => {
       const userName = userData.name;
       const id = userData.Userid; // फर्ज करें backend ID bhej raha hai
       const UserEmail = userData.email
+      const profile = userData.profileCompleted
 console.log("----------------------------");
       console.log("USER LOGGED IN SUCCESSFULLY!");
       console.log("USER ID:", id);
       console.log("USER Name:", userName);
       console.log("USER Email:", UserEmail);
+      console.log("Profile:", profile );
       console.log("----------------------------");
       // ✅ UserId ko phone ki memory mein save karein
     
@@ -47,6 +50,13 @@ console.log("----------------------------");
       await AsyncStorage.setItem('userId', id);
       await AsyncStorage.setItem("userName", userName);
       await AsyncStorage.setItem("userEmail", UserEmail);
+      await AsyncStorage.setItem("profileCompleted", JSON.stringify(profile) );
+
+      if (rememberMe) {
+      await AsyncStorage.setItem("rememberMe", "true");
+    } else {
+      await AsyncStorage.removeItem("rememberMe");
+    }
 
       router.push({
   pathname: '/(tabs)/Home',});
@@ -110,9 +120,27 @@ console.log("----------------------------");
           {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
           {errors.form && <Text style={styles.error}>{errors.form}</Text>}
+          <View style={{flexDirection : 'row', justifyContent:'space-between', alignItems:'center',paddingHorizontal:10,}}>
+          <TouchableOpacity
+  onPress={() => setRememberMe(!rememberMe)}
+  style={{ flexDirection: "row", alignItems: "center" }}
+>
+  <View style={{
+    width: 15,
+    height: 15,
+    borderWidth: 2,
+    borderRadius:'50%',
+    borderColor: "#0061A5",
+    marginRight: 3,
+    backgroundColor: rememberMe ? "#0061A5" : "white"
+  }} />
+
+  <Text style={{color:'#0061A5', fontSize:16}}>Remember Me</Text>
+</TouchableOpacity>
           <TouchableOpacity onPress={() => router.push('/forgetpasspage1')}>
             <Text style={styles.forgot}>Forgot Password</Text>
           </TouchableOpacity>
+          </View>
           <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>Sign In</Text>
           </TouchableOpacity>
@@ -125,16 +153,6 @@ console.log("----------------------------");
 
   <View style={styles.line} />
 </View>
-<TouchableOpacity style={styles.googleButton}>
-  <Image
-    source={require('../assets/images/google.jpg')}
-    style={styles.googleIcon}
-  />
-
-  <Text style={styles.googleText}>
-    Continue with Google
-  </Text>
-</TouchableOpacity>
           <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
             <Text style={styles.Register}>Don’t have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/signup')}>
@@ -198,9 +216,6 @@ const styles = StyleSheet.create({
   forgot: {
     fontSize: 16,
     color: '#0061A5',
-    textAlign: 'right',
-    paddingRight: 5,
-
   },
   button: {
     height: 60,
@@ -236,28 +251,6 @@ dividerText: {
   color: '#666',
   fontWeight: '500',
   letterSpacing: 0.5,
-},
-googleButton: {
-  height: 60,
-  borderWidth: 1,
-  borderColor: '#C4C6CF',
-  borderRadius: 30,
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: '#fff',
-  marginBottom:16,
-},
-googleIcon: {
-  width: 32,
-  height: 32,
-  resizeMode: 'contain',
-},
-
-googleText: {
-  fontSize: 18,
-  fontWeight: '500',
-  color: '#191C1E',
 },
   Register: {
     fontWeight: "500",

@@ -62,8 +62,7 @@ const profile = useSelector((state) => state.profile);
 
         // ✅ final payload
         const finalData = {
-          
-            userId,
+          userId,
             email,
             ...profile,
             profileCompleted: true,

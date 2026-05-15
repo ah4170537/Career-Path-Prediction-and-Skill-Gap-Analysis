@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter} from 'expo-router';
 import { useDispatch, useSelector } from "react-redux";
 import { setField } from "../store/profileSlice";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from "../api/api";
 
 export default function ProfileInfo() {
+  const [profileCompleted, setProfileCompleted] = useState(false);
   const router = useRouter();
   const profile = useSelector((state) => state.profile);
 const dispatch = useDispatch();
@@ -16,7 +19,9 @@ const dispatch = useDispatch();
   const updateField = (field, value) => {
   dispatch(setField({ field, value }));
 };
+
   const isFieldDisabled = (previousValue) => {
+    if (profileCompleted) return false;
     return !previousValue || previousValue.toString().trim().length === 0;
   };
 
@@ -44,6 +49,72 @@ const dispatch = useDispatch();
   });
 };
 
+useEffect(() => {
+   const checkProfileStatus = async () => {
+      try {
+         const status = await AsyncStorage.getItem("profileCompleted");
+
+         if (status !== null) {
+             const parsedStatus = JSON.parse(status);
+
+        setProfileCompleted(parsedStatus);
+
+        // Only fetch user data if profile already exists
+        if (parsedStatus) {
+
+          const userId = await AsyncStorage.getItem("userId");
+          console.log("USER ID:", userId);
+
+          const response = await api.get(
+            `/api/userinformation/${userId}`
+          );
+
+          const data = response.data;
+
+console.log("USER DATA:", data);
+
+          dispatch(setField({ field: "fullName", value: data.fullName || "" }));
+          dispatch(setField({ field: "studyLevel", value: data.studyLevel || "" }));
+          dispatch(setField({ field: "institute", value: data.institute || "" }));
+          dispatch(setField({ field: "program", value: data.program || "" }));
+          dispatch(setField({ field: "Educationstatus", value: data.Educationstatus || "" }));
+          dispatch(setField({ field: "semester", value: data.semester || "" }));
+          dispatch(setField({ field: "cgpa", value: data.cgpa || "" }));
+          dispatch(setField({ field: "completionYear", value: data.completionYear || "" }));
+        }
+      }
+      } catch (error) {
+         console.log(error);
+      }
+   };
+
+   checkProfileStatus();
+}, []);
+
+const handleUpdate = async () => {
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+
+    const response = await api.put(
+      `/api/userinformation/${userId}`,
+      profile   // sending redux state directly
+    );
+
+    console.log("UPDATED:", response.data);
+
+    Alert.alert("Success", "Profile updated successfully");
+    router.push('/profile')
+
+  } catch (error) {
+    console.log(error);
+
+    Alert.alert(
+      "Error",
+      error.response?.data?.message || "Update failed"
+    );
+  }
+};
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -52,7 +123,7 @@ const dispatch = useDispatch();
         </View>
       </View>
 
-      
+      {!profileCompleted && (
         <View style={styles.progressContainer}>
           <View style={styles.progressTextRow}>
             <Text style={styles.stepIndicator}>Step 1 of 3</Text>
@@ -60,10 +131,11 @@ const dispatch = useDispatch();
           </View>
           <View style={styles.track}><View style={[styles.fill, { width: '33%' }]} /></View>
         </View>
+      )}
    
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
-        <Text style={styles.mainTitle}>Tell us about yourself</Text>
+        <Text style={styles.mainTitle}>{!profileCompleted ? "Tell us About Yourself" : "Personal Information"}</Text>
 
         {/* 1. Full Name (Always enabled) */}
         <View style={styles.inputCard}>
@@ -178,10 +250,15 @@ const dispatch = useDispatch();
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.mainButton} onPress={handlePress}>
-          <Text style={styles.buttonText}>Continue</Text>
-        </TouchableOpacity>
-      </View>
+  <TouchableOpacity
+    style={styles.mainButton}
+    onPress={profileCompleted ? handleUpdate : handlePress}
+  >
+    <Text style={styles.buttonText}>
+      {profileCompleted ? "Update" : "Continue"}
+    </Text>
+  </TouchableOpacity>
+</View>
     </SafeAreaView>
   );
 }
