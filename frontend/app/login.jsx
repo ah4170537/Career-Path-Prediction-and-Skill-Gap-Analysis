@@ -32,10 +32,12 @@ const login = () => {
       const userData = response.data.user; 
       const userName = userData.name;
       const id = userData.Userid; // फर्ज करें backend ID bhej raha hai
+      const UserEmail = userData.email
 console.log("----------------------------");
       console.log("USER LOGGED IN SUCCESSFULLY!");
       console.log("USER ID:", id);
       console.log("USER Name:", userName);
+      console.log("USER Email:", UserEmail);
       console.log("----------------------------");
       // ✅ UserId ko phone ki memory mein save karein
     
@@ -44,6 +46,7 @@ console.log("----------------------------");
 // ✅ await lagana lazmi hai
       await AsyncStorage.setItem('userId', id);
       await AsyncStorage.setItem("userName", userName);
+      await AsyncStorage.setItem("userEmail", UserEmail);
 
       router.push({
   pathname: '/(tabs)/Home',});

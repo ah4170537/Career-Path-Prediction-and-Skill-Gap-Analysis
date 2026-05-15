@@ -25,12 +25,12 @@ const dispatch = useDispatch();
     // If onboarding, disable if the previous field is empty.
 
   const handlePress = () => {
-  const { fullName, studyLevel, institute, program, isCompleted } = profile;
+  const { fullName, studyLevel, institute, program, Educationstatus } = profile;
   
   // Log data to see what is missing in your console
   console.log("Current Form Data:", profile);
 
-  if (!fullName || !studyLevel || !institute || !program || isCompleted === null) {
+  if (!fullName || !studyLevel || !institute || !program || !Educationstatus) {
     Alert.alert("Required", "Please complete all mandatory fields.");
     return;
   }
@@ -134,43 +134,43 @@ const dispatch = useDispatch();
           <View style={styles.row}>
             <TouchableOpacity 
               disabled={isFieldDisabled(profile.program)}
-              onPress={() => updateField('isCompleted', true)} 
-              style={[styles.statusBtn, profile.isCompleted === true && styles.statusActive]}
+              onPress={() => updateField('Educationstatus', 'completed')}
+              style={[styles.statusBtn, profile.Educationstatus === 'completed' && styles.statusActive]}
             >
-              <Text style={profile.isCompleted === true && styles.activeBtnText}>Completed</Text>
+              <Text style={profile.Educationstatus === 'completed' && styles.activeBtnText}>Completed</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               disabled={isFieldDisabled(profile.program)}
-              onPress={() => updateField('isCompleted', false)} 
-              style={[styles.statusBtn, profile.isCompleted === false && styles.statusActive]}
+              onPress={() => updateField('Educationstatus', 'in-progress')} 
+              style={[styles.statusBtn, profile.Educationstatus === 'in-progress' && styles.statusActive]}
             >
-              <Text style={profile.isCompleted === false && styles.activeBtnText}>In Progress</Text>
+              <Text style={profile.Educationstatus === 'in-progress' && styles.activeBtnText}>In Progress</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Dynamic Fields (Year, Semester, CGPA) */}
-        {profile.isCompleted === true && (
+        {profile.Educationstatus === 'completed' && (
           <View style={styles.inputCard}>
             <Text style={styles.label}>Year of Completion</Text>
             <View style={styles.inputBox}>
-              <TextInput value={profile.completionYear} onChangeText={(val) => updateField('completionYear', val)} placeholder="e.g. 2024" keyboardType="numeric" style={styles.textInput} />
+              <TextInput value={profile.completionYear} onChangeText={(val) => updateField('completionYear', Number(val))} placeholder="e.g. 2024" keyboardType="numeric" style={styles.textInput} />
             </View>
           </View>
         )}
 
-        {profile.isCompleted === false && profile.studyLevel === 'Graduation' && (
+        {profile.Educationstatus === 'in-progress' && profile.studyLevel === 'Graduation' && (
           <View style={styles.row}>
             <View style={[styles.inputCard, { flex: 1 }]}>
               <Text style={styles.label}>Semester</Text>
               <View style={styles.inputBox}>
-                <TextInput value={profile.semester} onChangeText={(val) => updateField('semester', val)} placeholder="e.g. 6" keyboardType="numeric" style={styles.textInput} />
+                <TextInput value={profile.semester} onChangeText={(val) => updateField('semester',Number(val))} placeholder="e.g. 6" keyboardType="numeric" style={styles.textInput} />
               </View>
             </View>
             <View style={[styles.inputCard, { flex: 1, marginLeft: 10 }]}>
               <Text style={styles.label}>CGPA</Text>
               <View style={styles.inputBox}>
-                <TextInput value={profile.cgpa} onChangeText={(val) => updateField('cgpa', val)} placeholder="e.g. 3.8" keyboardType="numeric" style={styles.textInput} />
+                <TextInput value={profile.cgpa} onChangeText={(val) => updateField('cgpa', Number(val))} placeholder="e.g. 3.8" keyboardType="numeric" style={styles.textInput} />
               </View>
             </View>
           </View>

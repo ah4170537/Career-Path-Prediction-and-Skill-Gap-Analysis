@@ -1,11 +1,10 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 const skillSchema = new mongoose.Schema({
   skillName: {
     type: String,
     required: true,
     trim: true,
   },
-
   level: {
     type: String,
     enum: ["Beginner", "Intermediate", "Advanced"],
@@ -18,9 +17,13 @@ const userInformationSchema = new mongoose.Schema(
     // ✅ STILL USE ObjectId (This is the internal ID found via email)
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User", 
-      required: true,
+      type: String,
+      
+      unique: true, 
+    },
+    email: {
+      type: String, 
+      
       unique: true, 
     },
     fullName: {
@@ -31,7 +34,7 @@ const userInformationSchema = new mongoose.Schema(
 
     studyLevel: {
       type: String,
-      enum: ["Matric", "FSc", "Graduated"],
+      enum: ["Matric", "FSc", "Graduation"],
       required: true,
     },
 
@@ -41,13 +44,13 @@ const userInformationSchema = new mongoose.Schema(
       trim: true,
     },
 
-    field: {
+    program: {
       type: String,
       required: true,
       trim: true,
     },
 
-    status: {
+    Educationstatus: {
       type: String,
       enum: ["in-progress", "completed"],
       required: true,
@@ -102,5 +105,4 @@ profileCompleted: {
   },
   { timestamps: true }
 );
-const UserInformation = mongoose.model("UserInformation", userInformationSchema);
-export default UserInformation;
+module.exports = mongoose.model('UserInformation', userInformationSchema);

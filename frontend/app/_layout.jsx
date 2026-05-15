@@ -14,7 +14,7 @@ const _layout = () => {
         headerShown: false,
       }}
     >
-      <Stack.Screen name="SkillsStep" />
+      <Stack.Screen name="personalinfo" />
       <Stack.Screen name="(tabs)" />
     </Stack>
     </Provider>

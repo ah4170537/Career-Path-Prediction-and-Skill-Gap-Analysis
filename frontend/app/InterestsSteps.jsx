@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import * as DocumentPicker from 'expo-document-picker';
 import { useDispatch, useSelector } from "react-redux";
+import { setInterests, setResume } from "../store/profileSlice";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import api from "../api/api";
 
 const InterestsStep = () => {
   const router = useRouter();
-  const { userName } = useLocalSearchParams();
-
+  const dispatch = useDispatch();
+const profile = useSelector((state) => state.profile);
   const [searchQuery, setSearchQuery] = useState('');
   const [resumeFile, setResumeFile] = useState(null);
   
-  // State for interests (initialized empty)
-  const [selectedInterests, setSelectedInterests] = useState([]);
-
   const availableInterests = [
     'Web Development', 'Mobile Apps', 'Data Science', 
     'Artificial Intelligence', 'Cyber Security', 'Marketing', 
@@ -27,22 +27,73 @@ const InterestsStep = () => {
   );
 
   const toggleInterest = (interest) => {
-    if (selectedInterests.includes(interest)) {
-      setSelectedInterests(selectedInterests.filter(i => i !== interest));
-    } else {
-      setSelectedInterests([...selectedInterests, interest]);
-    }
-  };
 
-  const handleAction = () => {
+    let updatedInterests = [];
+
+    if (profile.interests.includes(interest)) {
+        updatedInterests = profile.interests.filter(
+            (i) => i !== interest
+        );
+    } else {
+        updatedInterests = [...profile.interests, interest];
+    }
+
+    dispatch(setInterests(updatedInterests));
+};
+
+  const handleAction = async () => {
+    
    
-      if (selectedInterests.length === 0) {
+      if (profile.interests.length === 0) {
         Alert.alert("Interests Required", "Please select at least one interest to finish your profile.");
         return;
       }
+       try {
+
+        // ✅ get logged in user id
+        const userId = await AsyncStorage.getItem("userId");
+        const email = await AsyncStorage.getItem("userEmail");
+        console.log("email" , email)
+
+        if (!userId) {
+            Alert.alert("Error", "User not found");
+            return;
+        }
+
+        // ✅ final payload
+        const finalData = {
+          
+            userId,
+            email,
+            ...profile,
+            profileCompleted: true,
+        };
+
+        console.log("FINAL DATA:", finalData);
+
+        // ✅ API call
+        const response = await api.post(
+            "/api/user-information",
+            finalData  
+        );
+
+        console.log(response.data);
+
+        Alert.alert("Success", "Profile completed");
+
+        router.replace("/Home");
+
+    } catch (error) {
+        console.log("ERROR FULL:", error);
+  console.log("ERROR RESPONSE:", error.response?.data);
+  console.log("ERROR STATUS:", error.response?.status);
+  
+
+        Alert.alert("Error", "Something went wrong");
+    }
       console.log("--- Final Onboarding Data ---");
-      console.log("User:", userName);
-      console.log("Selected Interests:", selectedInterests);
+      console.log("User:");
+      console.log("Selected Interests:", profile.interests);
       
       if (resumeFile) {
         console.log("Resume Local Path:", resumeFile.uri);
@@ -53,7 +104,8 @@ const InterestsStep = () => {
       }
       console.log("-----------------------------");
       // Final step - Navigate to Home or Dashboard
-      router.replace('/Home'); 
+      console.log("FULL REDUX PROFILE DATA:");
+console.log(profile);
     }
 
   const handleResumeUpload = async () => {
@@ -72,6 +124,12 @@ const InterestsStep = () => {
       if (!result.canceled) {
         const file = result.assets[0];
         setResumeFile(file);
+
+dispatch(setResume({
+    fileName: file.name,
+    filePath: file.uri,
+    fileType: file.mimeType,
+}));
         
         // Log the details for your backend/uploads/resume folder
         console.log("--- File Selection ---");
@@ -94,7 +152,7 @@ const InterestsStep = () => {
           <View style={styles.avatarCircle}>
             <Ionicons name="person" size={22} color="white" />
           </View>
-          <Text style={styles.headerTitle}>{userName || "User Profile"}</Text>
+          <Text style={styles.headerTitle}>User Profile</Text>
         </View>
       </View>
 
@@ -144,14 +202,14 @@ const InterestsStep = () => {
                 key={interest} 
                 style={[
                   styles.chip, 
-                  selectedInterests.includes(interest) && styles.chipActive 
+                  profile.interests.includes(interest) && styles.chipActive 
                 ]} 
                 onPress={() => toggleInterest(interest)}
               >
-                <Text style={[styles.chipText, selectedInterests.includes(interest) && styles.chipTextActive]}>
+                <Text style={[styles.chipText, profile.interests.includes(interest) && styles.chipTextActive]}>
                   {interest}
                 </Text>
-                {selectedInterests.includes(interest) && (
+                {profile.interests.includes(interest) && (
                   <Ionicons name="close-circle" size={16} color="white" style={{ marginLeft: 8 }} />
                 )}
               </TouchableOpacity>

@@ -1,6 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const UserInformation = require("../models/UserInformation");
 const sendOTPEmail = require('../mailer');
 
 const router = express.Router();
@@ -50,6 +51,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       user: {
         name: user.name,          // Assuming your Schema has a 'name' field
+        email: user.email,
         profileImage: user.profileImage || null, // Send null if no image exists yet
         Userid:user._id,
       }
@@ -136,37 +138,30 @@ router.post('/reset-password', async (req, res) => {
 router.post("/user-information", async (req, res) => {
   try {
     const {
-      userId,
-      fullName,
-      studyLevel,
-      institute,
-      field,
-      status,
-      completionYear,
-      semester,
-      cgpa,
-      skills,
-      interests,
-      resume,
-    } = req.body;
-
-    // 🔴 check if profile already exists
-    const existingProfile = await UserInformation.findOne({ userId });
-
-    if (existingProfile) {
-      return res.status(400).json({
-        message: "Profile already exists",
-      });
-    }
+  userId,
+  email,
+  fullName,
+  studyLevel,
+  institute,
+  program,
+  Educationstatus,
+  completionYear,
+  semester,
+  cgpa,
+  skills,
+  interests,
+  resume,
+} = req.body;
 
     // 🟢 create new profile
     const userInfo = new UserInformation({
       userId,
+      email,
       fullName,
       studyLevel,
       institute,
-      field,
-      status,
+      program,
+      Educationstatus,
       completionYear,
       semester,
       cgpa,
@@ -183,11 +178,14 @@ router.post("/user-information", async (req, res) => {
       userInfo,
     });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({
-      message: "Server error",
-    });
-  }
+  console.log("🔥 FULL BACKEND ERROR:", err);
+  console.log("🔥 ERROR NAME:", err.name);
+  console.log("🔥 ERROR MESSAGE:", err.message);
+
+  return res.status(500).json({
+    message: err.message,
+  });
+}
 });
 
 
