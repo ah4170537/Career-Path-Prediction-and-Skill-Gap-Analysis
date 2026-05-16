@@ -10,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import api from "../api/api";
 
 const InterestsStep = () => {
+  const [customInterests, setCustomInterests] = useState([]);
   const [profileCompleted, setProfileCompleted] = useState(false);
   const router = useRouter();
   const dispatch = useDispatch();
@@ -23,9 +24,16 @@ const profile = useSelector((state) => state.profile);
     'Cloud Computing', 'UI/UX Design', 'Software Engineering'
   ];
 
-  const filteredInterests = availableInterests.filter(i => 
-    i.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const allAvailableInterests = [
+  ...availableInterests,
+  ...profile.interests.filter(
+    i => !availableInterests.includes(i)
+  )
+];
+
+const filteredInterests = allAvailableInterests.filter(i =>
+  i.toLowerCase().includes(searchQuery.toLowerCase())
+);
 
   const toggleInterest = (interest) => {
 
@@ -214,23 +222,38 @@ if (data.interests) {
 const handleUpdate = async () => {
   try {
     const userId = await AsyncStorage.getItem("userId");
-    const payload = {
-      interests: profile.interests,
-    };
+
+    const formData = new FormData();
+
+    if (resumeFile) {
+      formData.append("resume", {
+        uri: resumeFile.uri,
+        name: resumeFile.name,
+        type: resumeFile.mimeType,
+      });
+    }
+
+    formData.append(
+      "interests",
+      JSON.stringify(profile.interests || [])
+    );
 
     const response = await api.put(
       `/api/userinformation/${userId}`,
-      payload   // sending redux state directly
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
     );
 
     console.log("UPDATED:", response.data);
 
     Alert.alert("Success", "Profile updated successfully");
-    router.push('/profile')
-
+    router.push("/profile");
   } catch (error) {
-    console.log(error);
-
+    console.log("UPDATE ERROR:", error);
     Alert.alert(
       "Error",
       error.response?.data?.message || "Update failed"
@@ -279,19 +302,36 @@ const handleUpdate = async () => {
                 onChangeText={setSearchQuery}
                 placeholderTextColor="#43474E"
               />
-              {searchQuery.length > 0 && (
-                <TouchableOpacity onPress={() => { toggleInterest(searchQuery); setSearchQuery(''); }}>
-                  <Ionicons name="add-circle" size={24} color="#0061A5" />
-                </TouchableOpacity>
-              )}
+              {searchQuery.trim().length > 0 && (
+  <TouchableOpacity
+    onPress={() => {
+      const newInterest = searchQuery.trim();
+
+      // avoid duplicates (both default + custom + redux)
+      const exists =
+        availableInterests.includes(newInterest) ||
+        customInterests.includes(newInterest) ||
+        profile.interests.includes(newInterest);
+
+      if (!exists) {
+        setCustomInterests(prev => [...prev, newInterest]); // UI list
+        dispatch(setInterests([...profile.interests, newInterest])); // Redux
+      }
+
+      setSearchQuery('');
+    }}
+  >
+    <Ionicons name="add-circle" size={24} color="#0061A5" />
+  </TouchableOpacity>
+)}
             </View>
           </View>
 
           {/* Interests Grid */}
           <View style={styles.interestsGrid}>
-            {filteredInterests.map((interest) => (
-              <TouchableOpacity 
-                key={interest} 
+            {filteredInterests.map((interest, index) => (
+  <TouchableOpacity
+    key={`${interest}-${index}`} 
                 style={[
                   styles.chip, 
                   profile.interests.includes(interest) && styles.chipActive 

@@ -10,8 +10,8 @@ const Home = () => {
 const [userName, setUserName] = useState("");
 const [profileCompleted, setProfileCompleted] = useState(false);
   const actions = [
-    { icon: 'list', label: 'Update Skills' },
-    { icon: 'map', label: 'View Roadmap', route: '/(tabs)/skillsgap' },
+    { icon: 'list', label: 'Update Skills', route: '../SkillsStep' },
+    { icon: 'map', label: 'View Roadmap', route: '/skillsgap' },
   ]
   const skills = [
     { icon: 'code-slash', label: 'Python', percent: 60 },

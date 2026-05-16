@@ -89,12 +89,19 @@ const filtered =
     console.log("USER DATA:", data);
     
            // ✅ LOAD SKILLS
-if (data.skills && data.skills.length > 0) {
+
+          // LOAD SKILLS ONCE
+          if (data.skills && data.skills.length > 0) {
   data.skills.forEach(skill => {
-    dispatch(addSkill(skill));
+    const exists = profile.skills?.some(
+      s => s.skillName === skill.skillName
+    );
+
+    if (!exists) {
+      dispatch(addSkill(skill));
+    }
   });
 }
-    
     // INTERESTS ARRAY
     
     // RESUME OBJECT

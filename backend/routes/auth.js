@@ -3,7 +3,8 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const UserInformation = require("../models/UserInformation");
 const sendOTPEmail = require('../mailer');
-
+const upload = require("../middleware/upload");
+const fs = require("fs");
 const router = express.Router();
 
 // Signup
@@ -140,7 +141,7 @@ router.post('/reset-password', async (req, res) => {
 
 router.post("/user-information", async (req, res) => {
   try {
-    const {
+    let {
       userId,
   email,
   fullName,
@@ -155,6 +156,7 @@ router.post("/user-information", async (req, res) => {
   interests,
   resume,
 } = req.body;
+
 
     // 🟢 create new profile
     const userInfo = new UserInformation({
@@ -215,32 +217,123 @@ router.get("/userinformation/:id", async (req, res) => {
 
 
 // Update Personal Information 
-router.put("/userinformation/:id", async (req, res) => {
-  try {
-    const updatedUser = await UserInformation.findOneAndUpdate(
-      { userId: req.params.id },   // important (NOT _id)
-      { $set: req.body },
-      { new: true }
-    );
+router.put(
+  "/userinformation/:id",
+  upload.single("resume"),
+  async (req, res) => {
+    try {
+      let updatedData = { ...req.body };
 
-    if (!updatedUser) {
-      return res.status(404).json({
-        message: "User not found",
+      // ==============================
+      // 🔥 FIX: Parse FormData string fields
+      // ==============================
+
+      if (updatedData.interests) {
+        try {
+          updatedData.interests = JSON.parse(updatedData.interests);
+        } catch (err) {
+          console.log("INTEREST PARSE ERROR:", err.message);
+          updatedData.interests = [];
+        }
+      }
+
+      // ==============================
+      // 🔢 Convert numeric fields
+      // ==============================
+
+      updatedData.semester = updatedData.semester
+        ? Number(updatedData.semester)
+        : null;
+
+      updatedData.cgpa = updatedData.cgpa
+        ? Number(updatedData.cgpa)
+        : null;
+
+      updatedData.completionYear = updatedData.completionYear
+        ? Number(updatedData.completionYear)
+        : null;
+
+      // ==============================
+      // 📄 Resume handling (Multer)
+      // ==============================
+
+      const oldUser = await UserInformation.findOne({
+        userId: req.params.id,
+      });
+
+      if (req.file) {
+        updatedData.resume = {
+          fileName: req.file.originalname,
+          filePath: req.file.path,
+          fileType: req.file.mimetype,
+        };
+
+        // delete old resume safely
+        if (oldUser?.resume?.filePath) {
+          try {
+            if (fs.existsSync(oldUser.resume.filePath)) {
+              fs.unlinkSync(oldUser.resume.filePath);
+              console.log("OLD RESUME DELETED");
+            }
+          } catch (err) {
+            console.log("DELETE ERROR:", err.message);
+          }
+        }
+      }
+
+      // ==============================
+      // 🎓 Education validation
+      // ==============================
+
+      if (updatedData.Educationstatus === "completed") {
+        if (!updatedData.completionYear) {
+          return res.status(400).json({
+            message: "Completion year is required",
+          });
+        }
+
+        updatedData.semester = null;
+        updatedData.cgpa = null;
+      }
+
+      if (updatedData.Educationstatus === "in-progress") {
+        if (!updatedData.semester || !updatedData.cgpa) {
+          return res.status(400).json({
+            message: "Semester and CGPA are required",
+          });
+        }
+
+        updatedData.completionYear = null;
+      }
+
+      // ==============================
+      // 💾 Update DB
+      // ==============================
+
+      const updatedUser = await UserInformation.findOneAndUpdate(
+        { userId: req.params.id },
+        { $set: updatedData },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      res.status(200).json({
+        message: "Profile updated successfully",
+        data: updatedUser,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        message: error.message,
       });
     }
-
-    res.status(200).json({
-      message: "Profile updated successfully",
-      data: updatedUser,
-    });
-
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({
-      message: error.message,
-    });
   }
-});
+);
 
 
 module.exports = router;
