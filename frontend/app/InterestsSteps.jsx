@@ -133,7 +133,12 @@ console.log(profile);
 
       if (!result.canceled) {
         const file = result.assets[0];
-        setResumeFile(file);
+
+setResumeFile({
+  fileName: file.name,
+  filePath: file.uri,
+  fileType: file.mimeType,
+});
 
 dispatch(setResume({
     fileName: file.name,
@@ -227,9 +232,9 @@ const handleUpdate = async () => {
 
     if (resumeFile) {
       formData.append("resume", {
-        uri: resumeFile.uri,
-        name: resumeFile.name,
-        type: resumeFile.mimeType,
+        uri: resumeFile.filePath,
+  name: resumeFile.fileName,
+  type: resumeFile.fileType,
       });
     }
 
@@ -269,7 +274,7 @@ const handleUpdate = async () => {
           <View style={styles.avatarCircle}>
             <Ionicons name="person" size={22} color="white" />
           </View>
-          <Text style={styles.headerTitle}>User Profile</Text>
+
         </View>
       </View>
 
@@ -361,7 +366,7 @@ const handleUpdate = async () => {
                 size={32} 
                 color={resumeFile ? "#0061A5" : "#022448"} 
               />
-              {resumeFile && <Text style={{fontSize: 12, marginTop: 5}} numberOfLines={1}>{resumeFile.name}</Text>}
+              {resumeFile && <Text style={{fontSize: 12, marginTop: 5}} numberOfLines={1}>{resumeFile?.fileName || "No resume uploaded"}</Text>}
             </TouchableOpacity>
             
             <Text style={styles.uploadLinkText}>

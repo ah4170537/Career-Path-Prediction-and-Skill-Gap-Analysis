@@ -3,13 +3,20 @@ import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, Image,
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useState } from 'react'
+import { useState , useEffect } from 'react'
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from "expo-image-picker";
+import { Alert } from "react-native";
+import api from "../../api/api";
 
 
 const profile = () => {
   const router = useRouter();
+  const [profileImage, setProfileImage] = useState(null);
+  const imageUrl = profileImage?.filePath
+  ? `${api.defaults.baseURL}/${profileImage.filePath}`
+  : null;
 
 const settingsOptions = [
   { icon: 'person-outline', label: 'Personal Information', route: '../personalinfo' },
@@ -28,6 +35,90 @@ const onChange = (event, selectedDate) => {
   }
 };
 
+const handleProfileImage = async () => {
+  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
+
+  if (!permission.granted || !cameraPermission.granted) {
+    alert("Permission required");
+    return;
+  }
+
+  Alert.alert("Choose Option", "Select Image Source", [
+    {
+      text: "Camera",
+      onPress: async () => {
+        const result = await ImagePicker.launchCameraAsync({
+          allowsEditing: true,
+          quality: 1,
+        });
+
+        if (!result.canceled) uploadImage(result.assets[0]);
+      },
+    },
+    {
+      text: "Gallery",
+      onPress: async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          allowsEditing: true,
+          quality: 1,
+        });
+
+        if (!result.canceled) uploadImage(result.assets[0]);
+      },
+    },
+  ]);
+};
+
+
+const uploadImage = async (file) => {
+  try {
+    const userId = await AsyncStorage.getItem("userId");
+
+    const formData = new FormData();
+
+    formData.append("profileImage", {
+      uri: file.uri,
+      name: "profile.jpg",
+      type: "image/jpeg",
+    });
+
+    const res = await api.put(
+      `/api/upload-profile/${userId}`,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    console.log("UPLOAD SUCCESS:", res.data);
+
+    // 🔥 THIS IS WHAT YOU ARE MISSING
+    setProfileImage(res.data.data);
+
+    await AsyncStorage.setItem(
+      "profileImage",
+      JSON.stringify(res.data.data)
+    );
+
+  } catch (err) {
+    console.log("UPLOAD ERROR:", err?.response?.data || err.message);
+  }
+};
+
+useEffect(() => {
+  const loadImage = async () => {
+    const img = await AsyncStorage.getItem("profileImage");
+    if (img) {
+      setProfileImage(JSON.parse(img));
+    }
+  };
+
+  loadImage();
+}, []);
+
 
   return (
    <SafeAreaView style={styles.viewarea}>
@@ -42,12 +133,40 @@ const onChange = (event, selectedDate) => {
           justifyContent: "center"
         }} onPress={() => router.push('/Home')}>
           <Ionicons name='arrow-back' color={"#fff"} size={28} />
+          
         </TouchableOpacity>
     <Text style={styles.heading}>Profile</Text>
-    <View style={{alignItems:'center', marginTop:10, marginBottom:10}}><Image
-                source={require('../../assets/images/profile.jpg')}
-                style={{width: 140,height: 140,borderRadius: 70,borderWidth:3, color:'#022448'}}
-              /></View>
+    <View style={{ alignItems: "center", marginTop: 10, marginBottom: 10 }}>
+  <TouchableOpacity onPress={handleProfileImage}>
+  {imageUrl ? (
+  <Image
+    source={{ uri: imageUrl }}
+    style={{
+      width: 140,
+      height: 140,
+      borderRadius: 70,
+      borderWidth: 3,
+      borderColor: "#022448",
+    }}
+  />
+) : (
+  <View
+    style={{
+      width: 140,
+      height: 140,
+      borderRadius: 70,
+      borderWidth: 3,
+      borderColor: "#022448",
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "#F1F3F7",
+    }}
+  >
+    <Ionicons name="person" size={70} color="#022448" />
+  </View>
+)}
+</TouchableOpacity>
+</View>
 
               <View style={styles.settingsContainer}>
       {settingsOptions.map((item, index) => (

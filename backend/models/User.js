@@ -14,6 +14,13 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+   profileImage: {
+    fileName: String,
+    filePath: String,
+    fileType: String,
+  },
+  
   resetOtp: String,
   resetOtpExpiry: Date,
 });

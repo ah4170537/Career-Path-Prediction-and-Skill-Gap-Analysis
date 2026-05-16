@@ -4,8 +4,10 @@ const User = require('../models/User');
 const UserInformation = require("../models/UserInformation");
 const sendOTPEmail = require('../mailer');
 const upload = require("../middleware/upload");
+const picupload = require("../middleware/picupload");
 const fs = require("fs");
 const router = express.Router();
+
 
 // Signup
 router.post('/signup', async (req, res) => {
@@ -335,5 +337,49 @@ router.put(
   }
 );
 
+// Upload Profile Image
+router.put(
+  "/upload-profile/:id",
+  picupload.single("profileImage"),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // 🗑 delete old image
+      if (req.file && user.profileImage?.filePath) {
+        try {
+          if (fs.existsSync(user.profileImage.filePath)) {
+            fs.unlinkSync(user.profileImage.filePath);
+          }
+        } catch (err) {
+          console.log(err.message);
+        }
+      }
+
+      // 📸 save new image
+      if (req.file) {
+        user.profileImage = {
+          fileName: req.file.originalname,
+          filePath: req.file.path.replace(/\\/g, "/"),
+          fileType: req.file.mimetype,
+        };
+      }
+
+      await user.save();
+
+      res.status(200).json({
+        message: "Profile image updated",
+        data: user.profileImage,
+      });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+);
 
 module.exports = router;

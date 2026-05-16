@@ -105,18 +105,6 @@ const filtered =
     // INTERESTS ARRAY
     
     // RESUME OBJECT
-    
-              // RESUME
-              if (data.resume) {
-    
-                dispatch(setResume({
-                  fileName: data.resume.fileName || "",
-                  filePath: data.resume.filePath || "",
-                  fileType: data.resume.fileType || "",
-                }));
-    
-                setResumeFile(data.resume);
-              }
             }
           }
     
