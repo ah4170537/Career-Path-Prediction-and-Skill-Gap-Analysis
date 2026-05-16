@@ -26,7 +26,19 @@ const SkillsStep = () => {
         return acc;
     }, {});
 
-    const filtered = allSkills.filter(sk => sk.toLowerCase().includes(search.toLowerCase()))
+    // filter existing skills
+const filteredSkills = allSkills.filter(sk =>
+    sk.toLowerCase().includes(search.toLowerCase())
+);
+
+// if typed skill does not exist → show typed skill also
+const filtered =
+    search.trim() &&
+    !allSkills.some(
+        sk => sk.toLowerCase() === search.trim().toLowerCase()
+    )
+        ? [...filteredSkills, search.trim()]
+        : filteredSkills;
 
     const handleAction = () => {
 
@@ -76,7 +88,12 @@ const SkillsStep = () => {
     
     console.log("USER DATA:", data);
     
-           
+           // ✅ LOAD SKILLS
+if (data.skills && data.skills.length > 0) {
+  data.skills.forEach(skill => {
+    dispatch(addSkill(skill));
+  });
+}
     
     // INTERESTS ARRAY
     
@@ -212,11 +229,17 @@ const SkillsStep = () => {
                                             style={styles.skillLevelOption}
                                             onPress={() => {
                                                 dispatch(addSkill({
-                                                    skillName: skills,
-                                                    level: level
-                                                }));
+    skillName: skills.trim(),
+    level: level
+}));
 
-                                                setOpenSkill(null);
+// add custom skill permanently in array UI
+if (!allSkills.includes(skills.trim())) {
+    allSkills.push(skills.trim());
+}
+
+setOpenSkill(null);
+setSearch('');
                                             }}
                                         >
                                             <View style={[styles.skillRadio, selected[skills] === level && styles.skillRadioActive]}>
